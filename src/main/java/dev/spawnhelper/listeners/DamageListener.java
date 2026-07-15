@@ -1,7 +1,6 @@
 package dev.spawnhelper.listeners;
 
 import dev.spawnhelper.SpawnHelperPlugin;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -18,10 +17,6 @@ public class DamageListener implements Listener {
         this.plugin = plugin;
     }
 
-    private boolean inSpawn(World world) {
-        return world.getName().equals(plugin.getSpawnConfig().getSpawnWorld());
-    }
-
     private boolean hasBypass(Player player) {
         return player.hasPermission("spawnhelper.bypass");
     }
@@ -33,7 +28,7 @@ public class DamageListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        if (!inSpawn(player.getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(player.getLocation())) return;
         if (hasBypass(player)) return;
 
         if (plugin.getSpawnConfig().isNoDamage()) {
@@ -48,7 +43,7 @@ public class DamageListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player victim)) return;
-        if (!inSpawn(victim.getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(victim.getLocation())) return;
         if (hasBypass(victim)) return;
 
         if (event.getDamager() instanceof Player attacker) {
@@ -68,7 +63,7 @@ public class DamageListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        if (!inSpawn(player.getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(player.getLocation())) return;
         if (hasBypass(player)) return;
 
         // Only freeze hunger loss, not healing (new level < current)

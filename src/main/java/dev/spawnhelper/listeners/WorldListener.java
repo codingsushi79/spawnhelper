@@ -1,7 +1,6 @@
 package dev.spawnhelper.listeners;
 
 import dev.spawnhelper.SpawnHelperPlugin;
-import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -17,17 +16,13 @@ public class WorldListener implements Listener {
         this.plugin = plugin;
     }
 
-    private boolean inSpawn(World world) {
-        return world.getName().equals(plugin.getSpawnConfig().getSpawnWorld());
-    }
-
     // ------------------------------------------------------------------
     // Mob spawning
     // ------------------------------------------------------------------
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if (!inSpawn(event.getEntity().getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(event.getEntity().getLocation())) return;
         if (!plugin.getSpawnConfig().isNoMobSpawning()) return;
 
         // Only suppress natural/ambient spawns — allow command/plugin spawns
@@ -49,7 +44,7 @@ public class WorldListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityExplode(EntityExplodeEvent event) {
-        if (!inSpawn(event.getEntity().getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(event.getEntity().getLocation())) return;
         if (plugin.getSpawnConfig().isNoExplosionDamage()) {
             // Clear block damage list but keep the explosion visual/sound
             event.blockList().clear();
@@ -58,7 +53,7 @@ public class WorldListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onExplosionPrime(ExplosionPrimeEvent event) {
-        if (!inSpawn(event.getEntity().getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(event.getEntity().getLocation())) return;
         // Cancel the explosion entirely if no-damage is on
         if (plugin.getSpawnConfig().isNoDamage()) {
             event.setCancelled(true);

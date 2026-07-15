@@ -45,11 +45,10 @@ public class CollisionManager {
      * Adds spawn-world players if enabled, removes them if disabled.
      */
     public void reapply() {
-        String world = plugin.getSpawnConfig().getSpawnWorld();
         boolean enabled = plugin.getSpawnConfig().isNoCollision();
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.getWorld().getName().equals(world)) {
+            if (plugin.getSpawnConfig().isInSpawnArea(player.getLocation())) {
                 if (enabled) {
                     team.addPlayer(player);
                 } else {

@@ -2,7 +2,6 @@ package dev.spawnhelper.listeners;
 
 import dev.spawnhelper.SpawnHelperPlugin;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -21,17 +20,13 @@ public class BlockListener implements Listener {
         this.plugin = plugin;
     }
 
-    private boolean inSpawn(World world) {
-        return world.getName().equals(plugin.getSpawnConfig().getSpawnWorld());
-    }
-
     // ------------------------------------------------------------------
     // Breaking
     // ------------------------------------------------------------------
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        if (!inSpawn(event.getBlock().getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(event.getBlock().getLocation())) return;
         if (event.getPlayer().hasPermission("spawnhelper.bypass")) return;
 
         if (plugin.getSpawnConfig().isNoBlockBreaking()) {
@@ -45,7 +40,7 @@ public class BlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (!inSpawn(event.getBlock().getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(event.getBlock().getLocation())) return;
         if (event.getPlayer().hasPermission("spawnhelper.bypass")) return;
 
         if (plugin.getSpawnConfig().isNoBlockPlacing()) {
@@ -61,7 +56,7 @@ public class BlockListener implements Listener {
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if (event.getClickedBlock() == null) return;
-        if (!inSpawn(event.getClickedBlock().getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(event.getClickedBlock().getLocation())) return;
         if (player.hasPermission("spawnhelper.bypass")) return;
 
         // If interaction is explicitly disabled, cancel
@@ -77,7 +72,7 @@ public class BlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockBurn(BlockBurnEvent event) {
-        if (!inSpawn(event.getBlock().getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(event.getBlock().getLocation())) return;
         if (plugin.getSpawnConfig().isNoFireSpread()) {
             event.setCancelled(true);
         }
@@ -85,7 +80,7 @@ public class BlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockSpread(BlockSpreadEvent event) {
-        if (!inSpawn(event.getBlock().getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(event.getBlock().getLocation())) return;
         if (plugin.getSpawnConfig().isNoFireSpread()
                 && event.getNewState().getType() == Material.FIRE) {
             event.setCancelled(true);

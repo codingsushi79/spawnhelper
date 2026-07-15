@@ -2,11 +2,9 @@ package dev.spawnhelper.listeners;
 
 import dev.spawnhelper.SpawnConfig;
 import dev.spawnhelper.SpawnHelperPlugin;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.GameMode;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -15,11 +13,14 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class PlayerListener implements Listener {
@@ -30,6 +31,7 @@ public class PlayerListener implements Listener {
     private final Map<UUID, GameMode> savedGamemodes  = new HashMap<>();
     private final Map<UUID, Float>    savedWalkSpeeds = new HashMap<>();
     private final Map<UUID, Float>    savedFlySpeeds  = new HashMap<>();
+    private final Set<UUID> activeSpawnPlayers = new HashSet<>();
 
     public PlayerListener(SpawnHelperPlugin plugin) {
         this.plugin = plugin;
@@ -39,16 +41,14 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        if (inSpawn(player.getWorld())) {
-            onEnterSpawn(player);
-        }
+        updateSpawnState(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         plugin.getCollisionManager().removePlayer(player);
+        activeSpawnPlayers.remove(player.getUniqueId());
         // Clean up stored state (don't restore — they disconnected)
         savedGamemodes.remove(player.getUniqueId());
         savedWalkSpeeds.remove(player.getUniqueId());
@@ -59,15 +59,16 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-        Player player = event.getPlayer();
-        boolean nowInSpawn  = inSpawn(player.getWorld());
-        boolean wasInSpawn  = inSpawn(event.getFrom());
+        updateSpawnState(event.getPlayer());
+    }
 
-        if (nowInSpawn && !wasInSpawn) {
-            onEnterSpawn(player);
-        } else if (!nowInSpawn && wasInSpawn) {
-            onLeaveSpawn(player);
-        }
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onPlayerMove(PlayerMoveEvent event) {
+        if (event.getTo() == null) return;
+        if (event.getFrom().getBlockX() == event.getTo().getBlockX()
+                && event.getFrom().getBlockY() == event.getTo().getBlockY()
+                && event.getFrom().getBlockZ() == event.getTo().getBlockZ()) return;
+        updateSpawnState(event.getPlayer());
     }
 
     // ── Item drop / pickup ────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
-        if (!inSpawn(player.getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(player.getLocation())) return;
         if (player.hasPermission("spawnhelper.bypass")) return;
         if (plugin.getSpawnConfig().isNoItemDrop()) event.setCancelled(true);
     }
@@ -83,7 +84,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPickupItem(EntityPickupItemEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        if (!inSpawn(player.getWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(player.getLocation())) return;
         if (player.hasPermission("spawnhelper.bypass")) return;
         if (plugin.getSpawnConfig().isNoItemPickup()) event.setCancelled(true);
     }
@@ -186,7 +187,16 @@ public class PlayerListener implements Listener {
 
     // ── Helper ────────────────────────────────────────────────────────────────
 
-    private boolean inSpawn(World world) {
-        return world.getName().equals(plugin.getSpawnConfig().getSpawnWorld());
+    private void updateSpawnState(Player player) {
+        boolean shouldBeActive = plugin.getSpawnConfig().isInSpawnArea(player.getLocation());
+        boolean isActive = activeSpawnPlayers.contains(player.getUniqueId());
+
+        if (shouldBeActive && !isActive) {
+            onEnterSpawn(player);
+            activeSpawnPlayers.add(player.getUniqueId());
+        } else if (!shouldBeActive && isActive) {
+            onLeaveSpawn(player);
+            activeSpawnPlayers.remove(player.getUniqueId());
+        }
     }
 }

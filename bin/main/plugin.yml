@@ -1,0 +1,33 @@
+name: SpawnHelper
+version: '${version}'
+main: dev.spawnhelper.SpawnHelperPlugin
+description: Configurable spawn world protection and settings
+api-version: '${apiVersion}'
+authors:
+  - SushiMC
+  - SquareDealSam
+
+commands:
+  spawnhelper:
+    description: SpawnHelper admin command
+    usage: /<command> [gui|reload|info]
+    permission: spawnhelper.admin
+    aliases: [sh]
+  spawn:
+    description: Teleport to the spawn world
+    usage: /<command>
+    permission: spawnhelper.spawn
+
+permissions:
+  spawnhelper.admin:
+    description: Access to SpawnHelper admin commands and GUI
+    default: op
+  spawnhelper.bypass:
+    description: Bypass all SpawnHelper restrictions
+    default: false
+  spawnhelper.spawn:
+    description: Use /spawn to teleport to the spawn world
+    default: true
+  spawnhelper.spawn.nocooldown:
+    description: Bypass the /spawn cooldown
+    default: op

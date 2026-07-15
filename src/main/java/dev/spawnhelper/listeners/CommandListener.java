@@ -20,7 +20,7 @@ public class CommandListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
-        if (!player.getWorld().getName().equals(plugin.getSpawnConfig().getSpawnWorld())) return;
+        if (!plugin.getSpawnConfig().isInSpawnArea(player.getLocation())) return;
         if (player.hasPermission("spawnhelper.bypass")) return;
         if (!plugin.getSpawnConfig().isCommandBlacklistEnabled()) return;
 

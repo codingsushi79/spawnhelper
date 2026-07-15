@@ -193,9 +193,8 @@ public class GuiListener implements Listener {
 
     private void applySpeedToSpawnPlayers(boolean enabled) {
         SpawnConfig cfg = plugin.getSpawnConfig();
-        String world = cfg.getSpawnWorld();
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (!p.getWorld().getName().equals(world)) continue;
+            if (!cfg.isInSpawnArea(p.getLocation())) continue;
             if (p.hasPermission("spawnhelper.bypass")) continue;
             if (enabled) {
                 p.setWalkSpeed(cfg.getWalkSpeed());

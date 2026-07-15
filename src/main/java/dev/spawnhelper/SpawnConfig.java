@@ -1,6 +1,7 @@
 package dev.spawnhelper;
 
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.List;
@@ -28,6 +29,31 @@ public class SpawnConfig {
 
     public String getSpawnWorld() {
         return cfg().getString("spawn-world", "world");
+    }
+
+    public boolean isSpawnAreaEnabled() {
+        return cfg().getBoolean("spawn-area.enabled", false);
+    }
+
+    public double getSpawnAreaMinX() { return cfg().getDouble("spawn-area.min.x", -100.0); }
+    public double getSpawnAreaMinY() { return cfg().getDouble("spawn-area.min.y", 64.0); }
+    public double getSpawnAreaMinZ() { return cfg().getDouble("spawn-area.min.z", -100.0); }
+    public double getSpawnAreaMaxX() { return cfg().getDouble("spawn-area.max.x", 100.0); }
+    public double getSpawnAreaMaxY() { return cfg().getDouble("spawn-area.max.y", 256.0); }
+    public double getSpawnAreaMaxZ() { return cfg().getDouble("spawn-area.max.z", 100.0); }
+
+    public boolean isInSpawnArea(Location location) {
+        if (location == null || location.getWorld() == null) return false;
+        if (!location.getWorld().getName().equals(getSpawnWorld())) return false;
+        if (!isSpawnAreaEnabled()) return true;
+
+        double x = location.getX();
+        double y = location.getY();
+        double z = location.getZ();
+
+        return x >= getSpawnAreaMinX() && x <= getSpawnAreaMaxX()
+                && y >= getSpawnAreaMinY() && y <= getSpawnAreaMaxY()
+                && z >= getSpawnAreaMinZ() && z <= getSpawnAreaMaxZ();
     }
 
     // ── Basic protection ──────────────────────────────────────────────────────

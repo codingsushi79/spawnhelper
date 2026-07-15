@@ -3,8 +3,8 @@ package dev.spawnhelper.command;
 import dev.spawnhelper.SpawnConfig;
 import dev.spawnhelper.SpawnHelperPlugin;
 import dev.spawnhelper.gui.ConfigGui;
-import dev.spawnhelper.manager.SpawnCommandManager;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -35,6 +35,55 @@ public class SpawnHelperCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0) { sendHelp(sender, label); return true; }
 
         switch (args[0].toLowerCase()) {
+            case "setspawn" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage(PREFIX + "§cOnly players can set the spawn destination.");
+                    return true;
+                }
+                Location loc = player.getLocation();
+                SpawnConfig cfg = plugin.getSpawnConfig();
+                cfg.set("spawn-command.destination.x", loc.getX());
+                cfg.set("spawn-command.destination.y", loc.getY());
+                cfg.set("spawn-command.destination.z", loc.getZ());
+                cfg.set("spawn-command.destination.yaw", loc.getYaw());
+                cfg.set("spawn-command.destination.pitch", loc.getPitch());
+                plugin.saveConfig();
+                sender.sendMessage(PREFIX + "§aSpawn destination updated to your current location.");
+            }
+            case "setarea1" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage(PREFIX + "§cOnly players can set the spawn area.");
+                    return true;
+                }
+                Location loc = player.getLocation();
+                SpawnConfig cfg = plugin.getSpawnConfig();
+                cfg.set("spawn-area.enabled", true);
+                cfg.set("spawn-area.min.x", loc.getX());
+                cfg.set("spawn-area.min.y", loc.getY());
+                cfg.set("spawn-area.min.z", loc.getZ());
+                plugin.saveConfig();
+                sender.sendMessage(PREFIX + "§aSet spawn area corner 1 to your current location.");
+            }
+            case "setarea2" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage(PREFIX + "§cOnly players can set the spawn area.");
+                    return true;
+                }
+                Location loc = player.getLocation();
+                SpawnConfig cfg = plugin.getSpawnConfig();
+                cfg.set("spawn-area.enabled", true);
+                cfg.set("spawn-area.max.x", loc.getX());
+                cfg.set("spawn-area.max.y", loc.getY());
+                cfg.set("spawn-area.max.z", loc.getZ());
+                plugin.saveConfig();
+                sender.sendMessage(PREFIX + "§aSet spawn area corner 2 to your current location.");
+            }
+            case "cleararea" -> {
+                SpawnConfig cfg = plugin.getSpawnConfig();
+                cfg.set("spawn-area.enabled", false);
+                plugin.saveConfig();
+                sender.sendMessage(PREFIX + "§aSpawn area selection disabled; protections will use the full spawn world again.");
+            }
             case "clearcooldown" -> {
                 if (args.length < 2) {
                     sender.sendMessage(PREFIX + "§cUsage: /spawnhelper clearcooldown <player>");
@@ -73,6 +122,10 @@ public class SpawnHelperCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7/" + label + " gui                    §f— Open the configuration GUI");
         sender.sendMessage("§7/" + label + " reload                 §f— Reload config.yml");
         sender.sendMessage("§7/" + label + " info                   §f— Show active settings");
+        sender.sendMessage("§7/" + label + " setspawn               §f— Set the /spawn destination to your current location");
+        sender.sendMessage("§7/" + label + " setarea1               §f— Set the first corner of the protected spawn area");
+        sender.sendMessage("§7/" + label + " setarea2               §f— Set the second corner of the protected spawn area");
+        sender.sendMessage("§7/" + label + " cleararea              §f— Disable the custom spawn-area selection");
         sender.sendMessage("§7/" + label + " clearcooldown <player> §f— Clear a player's /spawn cooldown");
     }
 
@@ -112,7 +165,7 @@ public class SpawnHelperCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("spawnhelper.admin")) return Collections.emptyList();
-        if (args.length == 1) return Arrays.asList("gui", "reload", "info", "clearcooldown");
+        if (args.length == 1) return Arrays.asList("gui", "reload", "info", "setspawn", "setarea1", "setarea2", "cleararea", "clearcooldown");
         if (args.length == 2 && args[0].equalsIgnoreCase("clearcooldown")) {
             String prefix = args[1].toLowerCase();
             return Bukkit.getOnlinePlayers().stream()
